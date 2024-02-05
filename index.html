@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Website</title>
+    <link rel="stylesheet" href="C:\Users\deven\Email\style.css">
+</head>
+<body>
+    <header>
+        <h1>Email Website</h1>
+    </header>
+
+    <main>
+        <section id="compose">
+            <h2>Compose Email</h2>
+            <form id="emailForm">
+                <label for="recipient">To:</label>
+                <input type="email" id="recipient" required>
+
+                <label for="subject">Subject:</label>
+                <input type="text" id="subject" required>
+
+                <label for="message">Message:</label>
+                <textarea id="message" required></textarea>
+
+                <button type="button" onclick="sendEmail()">Send Email</button>
+            </form>
+        </section>
+
+        <section id="inbox">
+            <h2>Inbox</h2>
+            <ul id="emailList"></ul>
+        </section>
+    </main>
+
+    <script src="C:\Users\deven\Email\server.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEmails();
+        });
+
+        async function sendEmail() {
+            const recipient = document.getElementById('recipient').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+
+            const response = await fetch('/send-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ recipient, subject, message }),
+            });
+
+            const result = await response.json();
+            alert(result.message);
+            loadEmails(); // Refresh the email list
+        }
+
+        async function deleteEmail(id) {
+            const response = await fetch(`/delete-email/${id}`, {
+                method: 'DELETE',
+            });
+
+            const result = await response.json();
+            alert(result.message);
+            loadEmails(); // Refresh the email list
+        }
+
+        async function printEmail(id) {
+            const response = await fetch(`/print-email/${id}`);
+            const emailToPrint = await response.json();
+
+            // For demonstration purposes, let's log the email details
+            console.log(emailToPrint);
+        }
+
+        async function loadEmails() {
+            const response = await fetch('/get-emails');
+            const emails = await response.json();
+
+            const inbox = document.getElementById('emailList');
+            inbox.innerHTML = '';
+
+            emails.forEach(email => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>${email.recipient}</strong> - ${email.subject}
+                    <button onclick="deleteEmail('${email.id}')">Delete</button>
+                    <button onclick="printEmail('${email.id}')">Print</button>
+                `;
+                inbox.appendChild(listItem);
+            });
+        }
+    </script>
+</body>
+</html>
